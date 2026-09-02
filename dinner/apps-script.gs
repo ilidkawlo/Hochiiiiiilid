@@ -57,9 +57,12 @@ function buildDay_(date) {
     }
   });
 
-  const people = Object.keys(map).map(k => map[k]).filter(p => p.name && p.qty > 0);
-  const names = getRosterNames_(date);
-  return {ok:true, date:date, people:people, names:names};
+  return {
+    ok:true,
+    date:date,
+    people:Object.keys(map).map(k => map[k]).filter(p => p.name && p.qty > 0),
+    names:getRosterNames_(date)
+  };
 }
 
 function getMonthlyDinnerOrders_(date) {
@@ -88,8 +91,7 @@ function getMonthlyDinnerOrders_(date) {
   for (let r = 2; r < values.length; r++) {
     const name = String((values[r] && values[r][1]) || '').trim();
     if (!name) continue;
-    const raw = String((values[r] && values[r][dinnerCol]) || '').trim();
-    const qty = Number(raw);
+    const qty = Number(String((values[r] && values[r][dinnerCol]) || '').trim());
     if (isFinite(qty) && qty > 0) out.push({name:name, qty:qty});
   }
   return out;
@@ -100,11 +102,8 @@ function getRosterNames_(date) {
   if (!info) return [];
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sh = ss.getSheetByName(info.sheetName);
-  if (!sh) return [];
-  const lastRow = sh.getLastRow();
-  if (lastRow < 3) return [];
-  const names = sh.getRange(3,2,lastRow-2,1).getDisplayValues().map(r => String(r[0] || '').trim()).filter(Boolean);
-  return Array.from(new Set(names));
+  if (!sh || sh.getLastRow() < 3) return [];
+  return Array.from(new Set(sh.getRange(3,2,sh.getLastRow()-2,1).getDisplayValues().map(r => String(r[0] || '').trim()).filter(Boolean)));
 }
 
 function getSystemRows_(date) {
@@ -127,8 +126,7 @@ function upsertOrder_(data) {
   const qty = Math.max(1, Number(data.qty) || 1);
   const price = Math.max(0, Number(data.price) || 110);
   if (!date || !name) return {ok:false, error:'missing_date_or_name'};
-  const rows = getSystemRows_(date);
-  const old = rows.find(r => r.name === name);
+  const old = getSystemRows_(date).find(r => r.name === name);
   if (old) {
     const nextQty = Math.max(0, old.qty) + qty;
     sh.getRange(old.row,3,1,6).setValues([[nextQty,price,nextQty*price,old.paid,old.picked,new Date()]]);
@@ -143,10 +141,8 @@ function updateStatus_(data) {
   const date = String(data.date || '').trim();
   const name = String(data.name || '').trim();
   if (!date || !name) return {ok:false, error:'missing_date_or_name'};
-  const paid = Boolean(data.paid);
-  const picked = Boolean(data.picked);
-  const rows = getSystemRows_(date);
-  const old = rows.find(r => r.name === name);
+  const paid = Boolean(data.paid), picked = Boolean(data.picked);
+  const old = getSystemRows_(date).find(r => r.name === name);
   if (old) {
     sh.getRange(old.row,6,1,3).setValues([[paid,picked,new Date()]]);
     return {ok:true, updated:true, date:date, name:name};
@@ -160,10 +156,16 @@ function deleteOrder_(data) {
   const date = String(data.date || '').trim();
   const name = String(data.name || '').trim();
   if (!date || !name) return {ok:false, error:'missing_date_or_name'};
-  const rows = getSystemRows_(date);
-  const old = rows.find(r => r.name === name);
+  const old = getSystemRows_(date).find(r => r.name === name);
   if (!old || old.qty <= 0) return {ok:false, error:'no_temporary_order'};
-  sh.getRange(old.row,3,1,6).setValues([[0,110,0,old.paid,old.picked,new Date()]]);
+
+  const monthlyQty = getMonthlyDinnerOrders_(date).filter(p => p.name === name).reduce((s,p) => s + p.qty, 0);
+  if (monthlyQty > 0 && (old.paid || old.picked)) {
+    sh.getRange(old.row,3,1,6).setValues([[0,110,0,old.paid,old.picked,new Date()]]);
+    return {ok:true, deletedOrder:true, keptStatus:true, date:date, name:name};
+  }
+
+  sh.deleteRow(old.row);
   return {ok:true, deleted:true, date:date, name:name};
 }
 
