@@ -24,7 +24,7 @@
 <div id="toast" class="toast"></div>
 <script>
 const PRICE=110,MIN_PORTIONS=6,STORE='ilid-dinner-v5';
-const API_URL=''; // 部署 Google Apps Script Web App 後，把網址貼在這裡。
+const API_URL='https://script.google.com/macros/s/AKfycbykzGOawROQT33yHfe9Ce58lapqyCMOj_WOssD6emHcoVcYnT3895heYallBq4KC44E/exec';
 let qty=1;
 let people=JSON.parse(localStorage.getItem(STORE)||'null')||[{name:'小安',qty:1,paid:false,picked:true},{name:'怡君',qty:2,paid:true,picked:false},{name:'Mina',qty:1,paid:true,picked:true}];
 function todayISO(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
