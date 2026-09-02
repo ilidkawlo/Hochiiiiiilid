@@ -2,90 +2,89 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>今晚吃什麼｜晚餐登記與取餐</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#F6F0E5" />
+<title>今晚吃什麼｜美味大愛光餐</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
-:root{--bg:#F6F0E5;--paper:#FFF9F0;--ink:#2F2A24;--red:#D85D49;--red-dark:#A94132;--green:#7E9E7A;--green-dark:#557250;--line:#D8CDBE;--muted:#81786E;--soft:#F4EBDD;--shadow:0 12px 30px rgba(72,56,37,.10)}
-*{box-sizing:border-box}body{margin:0;font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;color:var(--ink);background:radial-gradient(circle at 15% 8%,rgba(216,93,73,.05),transparent 24%),radial-gradient(circle at 88% 24%,rgba(230,182,85,.08),transparent 22%),var(--bg)}
-button,input,select{font:inherit}.app{max-width:1180px;margin:auto;padding:28px}.topbar{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:22px}.brand{display:flex;align-items:center;gap:14px}.logo{width:58px;height:58px;display:grid;place-items:center;background:var(--red);color:white;border-radius:22px 14px 24px 16px;font-size:30px;box-shadow:var(--shadow)}.brand h1{margin:0;font-size:30px}.brand p{margin:3px 0 0;color:var(--muted);font-size:14px}.owner-btn,.dark-btn{border:0;background:var(--ink);color:white;padding:12px 16px;border-radius:14px;font-weight:800;cursor:pointer}.hero{display:grid;grid-template-columns:1.05fr .95fr;gap:20px;margin-bottom:20px}.card{background:var(--paper);border:1px solid rgba(216,205,190,.85);border-radius:24px 18px 28px 20px;box-shadow:var(--shadow);overflow:hidden;position:relative}.meal-card,.order-card,.pickup-card,.summary-card{padding:26px}.paper-tab{position:absolute;width:90px;height:22px;background:#E9D8B9;top:8px;left:24px;transform:rotate(-3deg);opacity:.8}.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:900;color:var(--red-dark);background:#F9E1DB;border-radius:999px;padding:7px 11px}.meal-title{font-size:34px;margin:18px 0 8px}.meal-meta{display:flex;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:15px}.meal-visual{margin-top:24px;height:120px;border-radius:24px 18px 26px 20px;background:linear-gradient(135deg,#EEC877 0 34%,#C86B4B 34% 56%,#75936F 56% 76%,#F3E2B8 76%)}.section-title{margin:0 0 8px;font-size:23px}.status-box{background:#FAF3E7;border:1px dashed #CDBDA8;padding:16px;border-radius:18px;margin:18px 0}.status-line{display:flex;justify-content:space-between;gap:12px}.progress-track{height:14px;border-radius:999px;background:#E6DDD1;overflow:hidden;margin:12px 0 8px}.progress{height:100%;background:var(--green);border-radius:999px;transition:.25s}.name-block{margin:18px 0 12px}.name-label{display:block;font-weight:900;margin-bottom:8px}.name-input{width:100%;border:2px solid #D9CDBD;background:#FFFDF8;border-radius:15px;padding:15px 16px;font-size:18px;outline:none}.name-input:focus{border-color:var(--red)}.big-btn{width:100%;border:0;border-radius:18px;padding:18px 20px;font-size:22px;font-weight:900;cursor:pointer;background:var(--red);color:#fff;box-shadow:0 8px 0 #A94435}.big-btn:active{transform:translateY(4px);box-shadow:0 4px 0 #A94435}.notice{margin-top:12px;color:var(--muted);font-size:13px;line-height:1.6}.confirmation{display:none;margin-top:12px;background:#E7EFE4;color:#496746;padding:13px 14px;border-radius:14px;font-weight:800}.grid{display:grid;grid-template-columns:1.35fr .65fr;gap:20px}.pickup-header{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin-bottom:16px}.people{display:grid;gap:10px}.person{background:#FFFDF8;border:1px solid #E0D6C8;padding:14px;border-radius:16px}.person-top{display:flex;justify-content:space-between;gap:12px;align-items:center}.person strong{font-size:18px}.status-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.state-btn{border:1px solid #D8CDBE;background:#F1E8DA;color:#685F55;border-radius:12px;padding:11px 12px;font-weight:900;cursor:pointer}.state-btn.on.paid-btn{background:#E3F0E1;color:#466A42;border-color:#C8DFC5}.state-btn.on.pick-btn{background:#E9E2D7;color:#5F5447;border-color:#D8CCBD}.state-btn.off.paid-btn{background:#F8DFD8;color:#A14234;border-color:#F0C7BC}.state-btn.off.pick-btn{background:#F4EEE5;color:#786D62}.kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}.kpi{padding:14px;border-radius:16px;background:#F8F1E6}.kpi span{display:block;color:var(--muted);font-size:13px}.kpi strong{font-size:24px}.summary-number{font-size:46px;font-weight:900;color:var(--red);margin:8px 0}.modal{position:fixed;inset:0;background:rgba(32,28,24,.48);display:none;align-items:center;justify-content:center;padding:20px;z-index:30}.modal.show{display:flex}.modal-box{width:min(860px,100%);max-height:92vh;overflow:auto;background:var(--paper);border-radius:24px;padding:24px;box-shadow:0 30px 80px rgba(0,0,0,.25)}.modal-top{display:flex;justify-content:space-between;align-items:center;gap:14px}.close{border:0;background:#E9DFD0;border-radius:12px;padding:10px 12px;font-weight:800;cursor:pointer}.admin-tools{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:20px 0}.tool-card{background:#FFFDF8;border:1px solid #E0D6C8;border-radius:16px;padding:16px}.tool-card h4{margin:0 0 10px}.tool-card p{margin:0 0 12px;color:var(--muted);font-size:13px}.inline-form{display:grid;grid-template-columns:1.3fr .8fr auto;gap:8px}.field{width:100%;border:1px solid #D8CDBE;background:white;border-radius:12px;padding:11px 12px}.action-btn{border:0;background:var(--red);color:white;border-radius:12px;padding:11px 14px;font-weight:900;cursor:pointer}.secondary-btn{border:1px solid #D8CDBE;background:#F4EBDD;color:var(--ink);border-radius:12px;padding:11px 14px;font-weight:900;cursor:pointer}.import-row{display:flex;gap:8px;flex-wrap:wrap}.file-input{max-width:100%}.admin-list{display:grid;gap:8px}.admin-row{display:grid;grid-template-columns:1.2fr .7fr .7fr auto;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid #E8DED0}.pill{display:inline-flex;justify-content:center;border-radius:999px;padding:7px 10px;font-size:12px;font-weight:900}.yes{background:#E3F0E1;color:#466A42}.no{background:#F8DFD8;color:#A14234}.delete-btn{border:0;background:#EFE6DA;color:#806D5F;border-radius:10px;padding:8px 10px;cursor:pointer}.hint{font-size:12px;color:var(--muted);margin-top:8px}.empty{padding:18px;text-align:center;background:#F8F1E6;color:var(--muted);border-radius:14px}
-@media(max-width:860px){.hero,.grid,.admin-tools{grid-template-columns:1fr}.topbar{align-items:flex-start}.inline-form{grid-template-columns:1fr 1fr}.inline-form .action-btn{grid-column:1/-1}.admin-row{grid-template-columns:1fr 1fr}.admin-row strong{grid-column:1/-1}}
-@media(max-width:620px){.app{padding:16px}.brand h1{font-size:24px}.logo{width:50px;height:50px}.topbar{align-items:center}.owner-btn{padding:10px 12px}.meal-title{font-size:29px}.status-line{display:grid}.status-actions{grid-template-columns:1fr 1fr}.pickup-header{display:block}.pickup-header .notice{margin-top:6px}}
+:root{--bg:#F6F0E5;--paper:#FFF9F0;--ink:#2F2A24;--muted:#857D72;--red:#DC5C49;--red2:#B74434;--green:#789875;--green2:#557552;--line:#DED2C1;--cream:#F3E7D3;--shadow:0 12px 28px rgba(72,56,37,.10)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html{background:var(--bg)}body{margin:0;color:var(--ink);background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif}.app{width:min(100%,920px);margin:auto;padding:18px max(16px,env(safe-area-inset-right)) calc(36px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 2px 18px}.brand{display:flex;align-items:center;gap:11px}.logo{width:48px;height:48px;border-radius:18px 13px 20px 14px;background:var(--red);display:grid;place-items:center;font-size:25px;box-shadow:var(--shadow)}h1{font-size:23px;margin:0}.sub{font-size:12px;color:var(--muted);margin-top:2px}.owner-btn,.ghost-btn{border:0;border-radius:14px;padding:11px 13px;font-weight:800;font-size:14px;cursor:pointer}.owner-btn{background:#2F2A24;color:white}.ghost-btn{background:#EEE4D5;color:#4B443C}.stack{display:grid;gap:14px}.card{background:var(--paper);border:1px solid var(--line);border-radius:25px 19px 28px 21px;box-shadow:var(--shadow);overflow:hidden}.meal{padding:24px;position:relative}.tape{position:absolute;top:12px;left:34px;width:112px;height:22px;background:#EAD9B9;transform:rotate(-3deg);opacity:.75}.eyebrow{display:inline-flex;margin-top:14px;border-radius:999px;background:#F9DFD9;color:#A94335;padding:7px 11px;font-size:13px;font-weight:900}.meal h2{margin:38px 0 12px;font-size:clamp(31px,7vw,48px);letter-spacing:-.035em;line-height:1.14}.meta{display:flex;flex-wrap:wrap;gap:7px 14px;color:var(--muted);font-size:17px}.food-visual{height:148px;margin-top:22px;border-radius:23px;background:linear-gradient(135deg,#F1CA72 0 32%,#CB6A49 32% 54%,#789574 54% 78%,#F3E2AE 78%)}.order{padding:24px}.order h3,.pickup h3{font-size:25px;margin:0 0 7px}.helper{color:var(--muted);font-size:14px;line-height:1.55}.progressBox{margin:18px 0;padding:16px;background:#FAF2E5;border:1px dashed #CDBCA5;border-radius:18px}.statusLine{display:flex;justify-content:space-between;gap:10px;font-weight:800}.track{height:13px;margin:12px 0 7px;background:#E7DDD0;border-radius:999px;overflow:hidden}.bar{height:100%;background:var(--green);border-radius:999px;transition:.25s}.form-label{display:block;font-size:18px;font-weight:900;margin:20px 0 8px}.name-input{width:100%;border:2px solid var(--red);background:#FFFCF7;border-radius:17px;padding:16px;font:inherit;font-size:18px;outline:0}.name-input:focus{box-shadow:0 0 0 4px rgba(220,92,73,.12)}.qty-box{display:flex;align-items:center;justify-content:space-between;gap:14px;border:1px solid var(--line);background:#FFFCF7;border-radius:18px;padding:10px 12px}.qty-label strong{display:block;font-size:18px}.qty-label span{color:var(--muted);font-size:13px}.stepper{display:grid;grid-template-columns:48px 48px 48px;align-items:center;text-align:center}.step{height:48px;border:0;border-radius:14px;background:#EEE3D5;font-size:28px;font-weight:800;cursor:pointer}.qty{font-size:25px;font-weight:900}.cta{width:100%;border:0;border-radius:19px;padding:18px 16px;margin-top:14px;background:var(--red);color:white;font-weight:900;font-size:21px;box-shadow:0 8px 0 var(--red2);cursor:pointer}.cta:active{transform:translateY(4px);box-shadow:0 4px 0 var(--red2)}.cta.done{background:var(--green);box-shadow:0 8px 0 var(--green2)}.pickup{padding:22px}.pickup-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:14px}.people{display:grid;gap:10px}.person{border:1px solid var(--line);background:#FFFCF7;border-radius:17px;padding:14px}.person-top{display:flex;justify-content:space-between;gap:10px;align-items:center}.person-name{font-size:19px;font-weight:900}.portion{font-size:13px;color:var(--muted);background:#F1E8DB;border-radius:999px;padding:6px 9px}.state-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:11px}.state{min-height:50px;border:0;border-radius:14px;font-size:15px;font-weight:900;cursor:pointer}.state.unpaid{background:#F9DDD6;color:#A43E30}.state.paid{background:#DFEDDD;color:#40653E}.state.notpicked{background:#EDE7DE;color:#61584E}.state.picked{background:#2F2A24;color:white}.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}.sum{padding:12px 8px;text-align:center;background:#F5EDDF;border-radius:14px}.sum strong{display:block;font-size:22px}.sum span{font-size:12px;color:var(--muted)}.modal{position:fixed;inset:0;background:rgba(31,27,23,.48);display:none;align-items:flex-end;justify-content:center;z-index:30;padding:12px}.modal.show{display:flex}.sheet{width:min(100%,760px);max-height:90vh;overflow:auto;background:var(--paper);border-radius:27px 27px 18px 18px;padding:20px;box-shadow:0 30px 80px rgba(0,0,0,.25)}.sheet-head{display:flex;justify-content:space-between;align-items:center;gap:10px}.sheet h3{margin:0;font-size:24px}.close{border:0;border-radius:12px;background:#EEE2D2;padding:10px 12px;font-weight:800}.manage-grid{display:grid;gap:10px;margin-top:16px}.field{width:100%;border:1.5px solid var(--line);background:white;border-radius:14px;padding:13px;font:inherit}.admin-row{display:grid;grid-template-columns:1fr 92px;gap:8px}.admin-add{border:0;border-radius:14px;background:#2F2A24;color:white;font-weight:900}.import{margin-top:14px;padding:15px;border:1px dashed #CDBCA5;border-radius:16px;background:#FAF2E5}.import input{width:100%;margin-top:9px}.small{font-size:12px;color:var(--muted);line-height:1.55}.toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:#2F2A24;color:#fff;padding:11px 15px;border-radius:999px;font-weight:800;opacity:0;pointer-events:none;transition:.2s;z-index:50;white-space:nowrap}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(min-width:700px){.app{padding-top:28px}.stack{grid-template-columns:1.05fr .95fr}.pickup{grid-column:1/-1}.meal,.order{min-height:100%}.food-visual{height:190px}.people{grid-template-columns:1fr 1fr}.modal{align-items:center}.sheet{border-radius:27px}}
+@media(max-width:420px){.app{padding-left:12px;padding-right:12px}.brand .sub{display:none}.logo{width:43px;height:43px}.owner-btn{padding:10px 11px}.meal,.order,.pickup{padding:19px}.meal h2{margin-top:34px}.meta{font-size:15px}.food-visual{height:118px}.stepper{grid-template-columns:44px 42px 44px}.step{height:44px}.state-grid{grid-template-columns:1fr 1fr}.statusLine{font-size:14px}}
 </style>
 </head>
 <body>
 <div class="app">
-  <div class="topbar">
-    <div class="brand"><div class="logo">🍚</div><div><h1>今晚吃什麼</h1><p>晚餐登記・取餐・付款，一頁完成</p></div></div>
-    <button class="owner-btn" onclick="openOwner()">名單管理</button>
-  </div>
+  <header class="topbar">
+    <div class="brand"><div class="logo">🍚</div><div><h1>今晚吃什麼</h1><div class="sub">訂餐・付款・取餐，一眼就懂</div></div></div>
+    <button class="owner-btn" onclick="openManage()">名單管理</button>
+  </header>
 
-  <section class="hero">
-    <article class="card meal-card">
-      <div class="paper-tab"></div><div class="eyebrow">明日晚餐</div>
-      <h2 class="meal-title">番茄燉雞腿＋烤時蔬</h2>
-      <div class="meal-meta"><span>每份 NT$150</span><span>・</span><span>晚間 6:30 取餐</span><span>・</span><span>今晚 9:00 截止</span></div>
-      <div class="meal-visual" aria-label="晚餐視覺示意"></div>
-    </article>
+  <main class="stack">
+    <section class="card meal">
+      <div class="tape"></div><div class="eyebrow">明日晚餐</div>
+      <h2>美味大愛光餐</h2>
+      <div class="meta"><span><strong>NT$110</strong></span><span>6:00 取餐</span></div>
+      <div class="food-visual" aria-label="餐點色塊視覺"></div>
+    </section>
 
-    <article class="card order-card">
-      <h3 class="section-title">明天要一起吃嗎？</h3>
-      <p style="margin:0;color:var(--muted)">至少 <strong>6 人</strong>才開火。現在已有 <strong id="count">0</strong> 人。</p>
-      <div class="status-box"><div class="status-line"><strong id="groupText">等待登記</strong><span>今晚 9:00 截止</span></div><div class="progress-track"><div class="progress" id="progress"></div></div><div style="font-size:13px;color:var(--muted)">成團進度</div></div>
-      <div class="name-block"><label class="name-label" for="orderName">先告訴我們你是誰</label><input id="orderName" class="name-input" placeholder="輸入姓名，例如：小安" autocomplete="off"></div>
-      <button class="big-btn" onclick="placeOrder()">我要一份</button>
-      <div class="notice">姓名是必要資訊，登記後才知道這份餐是誰的。</div>
-      <div class="confirmation" id="orderConfirm"></div>
-    </article>
-  </section>
+    <section class="card order">
+      <h3>明天要一起吃嗎？</h3>
+      <div class="helper">至少 6 份才開火，目前已有 <strong id="count">0</strong> 份。</div>
+      <div class="progressBox"><div class="statusLine"><span id="groupText">還差 6 份成團</span><span>今晚 9:00 截止</span></div><div class="track"><div id="progress" class="bar"></div></div><div class="small">成團進度以「份數」計算，多訂也會一起計入。</div></div>
 
-  <section class="grid">
-    <article class="card pickup-card">
-      <div class="pickup-header"><div><div class="eyebrow" style="background:#E6EFE2;color:#4F704B">今日取餐</div><h3 class="section-title" style="margin-top:12px">每個人的付款與取餐，分開調整</h3></div><div class="notice">狀態會立即更新</div></div>
-      <div class="people" id="peopleList"></div>
-    </article>
-    <aside class="card summary-card">
-      <div class="eyebrow" style="background:#F4E7C6;color:#7A5B1B">今日摘要</div>
-      <div class="summary-number" id="pickedCount">0 / 0</div><div style="color:var(--muted)">已取餐人數</div>
-      <div class="kpis"><div class="kpi"><span>已付款</span><strong id="paidCount">0</strong></div><div class="kpi"><span>未付款</span><strong id="unpaidCount">0</strong></div></div>
-      <div class="notice">「付款」和「取餐」是兩個獨立欄位。先取餐、晚點付款也能正確保留。</div>
-    </aside>
-  </section>
+      <label class="form-label" for="nameInput">請問芳名</label>
+      <input id="nameInput" class="name-input" autocomplete="name" placeholder="輸入姓名，例如：小安" />
+
+      <label class="form-label">要幾份？</label>
+      <div class="qty-box"><div class="qty-label"><strong>訂餐份數</strong><span>可一次幫家人或同事多訂</span></div><div class="stepper"><button class="step" onclick="changeQty(-1)" aria-label="減少一份">−</button><div id="qty" class="qty">1</div><button class="step" onclick="changeQty(1)" aria-label="增加一份">＋</button></div></div>
+      <button id="orderBtn" class="cta" onclick="placeOrder()">登記 1 份・NT$110</button>
+      <div id="orderNote" class="helper" style="margin-top:13px">先填姓名，再選份數；按一次即完成登記。</div>
+    </section>
+
+    <section class="card pickup">
+      <div class="pickup-head"><div><div class="eyebrow" style="margin-top:0;background:#E4EFE1;color:#4D6F49">今日取餐</div><h3 style="margin-top:10px">付款、取餐分開點</h3></div><button class="ghost-btn" onclick="openManage()">＋ 新增 / 匯入</button></div>
+      <div class="helper">每個人的「付款」與「取餐」都是獨立狀態，可以隨時修正。切換付款狀態時會播放聲音提示。</div>
+      <div id="peopleList" class="people" style="margin-top:15px"></div>
+      <div class="summary"><div class="sum"><strong id="portionCount">0</strong><span>總份數</span></div><div class="sum"><strong id="paidCount">0</strong><span>已付款</span></div><div class="sum"><strong id="pickedCount">0</strong><span>已取餐</span></div></div>
+    </section>
+  </main>
 </div>
 
-<div class="modal" id="ownerModal">
-  <div class="modal-box">
-    <div class="modal-top"><div><div class="eyebrow">店主管理</div><h3 style="margin:10px 0 0;font-size:26px">今日訂餐名單</h3></div><button class="close" onclick="closeOwner()">關閉</button></div>
-    <div class="admin-tools">
-      <div class="tool-card"><h4>手動新增</h4><p>臨時加餐、電話登記、現場補名單，都從這裡加入。</p><div class="inline-form"><input id="manualName" class="field" placeholder="姓名"><select id="manualPaid" class="field"><option value="false">未付款</option><option value="true">已付款</option></select><button class="action-btn" onclick="manualAdd()">新增</button></div></div>
-      <div class="tool-card"><h4>Excel / CSV 匯入</h4><p>建議欄位：姓名、訂餐、付款、取餐。只有「訂餐=是」的人會進今日名單。</p><div class="import-row"><input id="fileInput" class="file-input" type="file" accept=".xlsx,.xls,.csv"><button class="secondary-btn" onclick="importRoster()">匯入名單</button></div><div class="hint">可辨識：是/否、已付款/未付款、已取餐/未取餐、1/0。</div></div>
-    </div>
-    <div class="admin-list" id="adminList"></div>
+<div id="manageModal" class="modal" onclick="if(event.target===this)closeManage()"><div class="sheet">
+  <div class="sheet-head"><div><div class="eyebrow" style="margin-top:0">店主管理</div><h3 style="margin-top:9px">新增或匯入今日名單</h3></div><button class="close" onclick="closeManage()">關閉</button></div>
+  <div class="manage-grid">
+    <input id="adminName" class="field" placeholder="姓名" />
+    <div class="admin-row"><input id="adminQty" class="field" type="number" min="1" value="1" inputmode="numeric" /><button class="admin-add" onclick="adminAdd()">新增</button></div>
   </div>
-</div>
+  <div class="import"><strong>Excel / CSV 匯入</strong><div class="small">建議欄位：姓名｜份數｜付款｜取餐。付款、取餐可填「是／否」、「已付款／未付款」、「已取餐／未取餐」。</div><input id="fileInput" type="file" accept=".xlsx,.xls,.csv" onchange="importSheet(event)" /></div>
+  <div class="small" style="margin-top:12px">目前為前端測試版，資料儲存在這台裝置的瀏覽器。正式多人共用時需要接雲端資料庫。</div>
+</div></div>
+<div id="toast" class="toast"></div>
 
 <script>
-const minGroup=6, price=150;
-const seed=[{name:'以莉',paid:true,picked:true,ordered:true},{name:'小安',paid:false,picked:true,ordered:true},{name:'怡君',paid:true,picked:false,ordered:true},{name:'阿哲',paid:false,picked:false,ordered:true},{name:'Mina',paid:true,picked:false,ordered:true}];
-let people=loadData();
-function loadData(){try{const v=JSON.parse(localStorage.getItem('dinnerRosterV2'));return Array.isArray(v)?v:seed}catch(e){return seed}}
-function save(){localStorage.setItem('dinnerRosterV2',JSON.stringify(people));renderAll()}
-function norm(v){return String(v??'').trim().toLowerCase()}
-function truth(v){const s=norm(v);return ['1','true','yes','y','是','有','已付款','已取餐','已訂餐','付款','取餐','訂餐'].includes(s)}
-function orderCount(){return people.filter(p=>p.ordered!==false).length}
-function renderTomorrow(){const n=orderCount();document.getElementById('count').textContent=n;document.getElementById('progress').style.width=Math.min(100,n/minGroup*100)+'%';const g=document.getElementById('groupText');g.textContent=n>=minGroup?'已成團，明天會開火':`還差 ${minGroup-n} 人成團`;g.style.color=n>=minGroup?'#466A42':''}
-function placeOrder(){const input=document.getElementById('orderName');const name=input.value.trim();const c=document.getElementById('orderConfirm');if(!name){input.focus();input.style.borderColor='#D85D49';c.style.display='block';c.style.background='#F8DFD8';c.style.color='#A14234';c.textContent='請先輸入姓名，才能知道這份餐是誰的。';return}input.style.borderColor='';const existing=people.find(p=>p.name===name&&p.ordered!==false);if(existing){c.style.display='block';c.style.background='#F8F1E6';c.style.color='#685F55';c.textContent=`${name} 已經在名單裡，不會重複登記。`;return}people.push({name,paid:false,picked:false,ordered:true});save();c.style.display='block';c.style.background='#E7EFE4';c.style.color='#496746';c.textContent=`✓ ${name}，已完成明日晚餐登記。`;input.value=''}
-function toggleStatus(i,key){people[i][key]=!people[i][key];save()}
-function renderPeople(){const list=document.getElementById('peopleList');const roster=people.filter(p=>p.ordered!==false);list.innerHTML='';if(!roster.length){list.innerHTML='<div class="empty">今天還沒有訂餐名單</div>'}roster.forEach(p=>{const i=people.indexOf(p);const row=document.createElement('div');row.className='person';row.innerHTML=`<div class="person-top"><strong>${escapeHtml(p.name)}</strong><span style="font-size:13px;color:#81786E">NT$${price}</span></div><div class="status-actions"><button class="state-btn paid-btn ${p.paid?'on':'off'}" onclick="toggleStatus(${i},'paid')">${p.paid?'✓ 已付款':'未付款'}</button><button class="state-btn pick-btn ${p.picked?'on':'off'}" onclick="toggleStatus(${i},'picked')">${p.picked?'✓ 已取餐':'未取餐'}</button></div>`;list.appendChild(row)});const picked=roster.filter(p=>p.picked).length,paid=roster.filter(p=>p.paid).length;document.getElementById('pickedCount').textContent=`${picked} / ${roster.length}`;document.getElementById('paidCount').textContent=paid;document.getElementById('unpaidCount').textContent=roster.length-paid}
-function openOwner(){document.getElementById('ownerModal').classList.add('show');renderAdmin()}
-function closeOwner(){document.getElementById('ownerModal').classList.remove('show')}
-function manualAdd(){const n=document.getElementById('manualName'),name=n.value.trim();if(!name){n.focus();return}if(people.some(p=>p.name===name&&p.ordered!==false)){alert('這個名字已經在今日名單裡');return}people.push({name,paid:document.getElementById('manualPaid').value==='true',picked:false,ordered:true});n.value='';save();renderAdmin()}
-function renderAdmin(){const box=document.getElementById('adminList');const roster=people.filter(p=>p.ordered!==false);box.innerHTML='';if(!roster.length){box.innerHTML='<div class="empty">尚無名單</div>';return}roster.forEach(p=>{const i=people.indexOf(p);const row=document.createElement('div');row.className='admin-row';row.innerHTML=`<strong>${escapeHtml(p.name)}</strong><button class="state-btn paid-btn ${p.paid?'on':'off'}" onclick="toggleStatus(${i},'paid');renderAdmin()">${p.paid?'已付款':'未付款'}</button><button class="state-btn pick-btn ${p.picked?'on':'off'}" onclick="toggleStatus(${i},'picked');renderAdmin()">${p.picked?'已取餐':'未取餐'}</button><button class="delete-btn" onclick="removePerson(${i})">移除</button>`;box.appendChild(row)})}
-function removePerson(i){if(confirm(`確定移除 ${people[i].name}？`)){people.splice(i,1);save();renderAdmin()}}
-async function importRoster(){const file=document.getElementById('fileInput').files[0];if(!file){alert('請先選擇 Excel 或 CSV 檔');return}try{const data=await file.arrayBuffer();const wb=XLSX.read(data,{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];const rows=XLSX.utils.sheet_to_json(ws,{defval:''});let added=0;rows.forEach(r=>{const name=String(r['姓名']??r['名字']??r['name']??r['Name']??'').trim();if(!name)return;const orderedRaw=r['訂餐']??r['訂餐狀況']??r['ordered']??'是';if(!truth(orderedRaw)&&norm(orderedRaw)!=='')return;const obj={name,ordered:true,paid:truth(r['付款']??r['付款狀況']??r['paid']),picked:truth(r['取餐']??r['取餐狀況']??r['picked'])};const old=people.find(p=>p.name===name&&p.ordered!==false);if(old){old.paid=obj.paid;old.picked=obj.picked}else{people.push(obj);added++}});save();renderAdmin();alert(`匯入完成，新增 ${added} 筆；同名資料已更新付款/取餐狀態。`)}catch(e){alert('匯入失敗，請確認第一列有欄位名稱，例如：姓名、訂餐、付款、取餐。')}}
-function escapeHtml(s){return String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
-function renderAll(){renderTomorrow();renderPeople()}
-renderAll();
+const PRICE=110, MIN_PORTIONS=6, STORE='ilid-dinner-v4';
+let qty=1;
+let people=JSON.parse(localStorage.getItem(STORE)||'null')||[
+  {name:'小安',qty:1,paid:false,picked:true},
+  {name:'怡君',qty:2,paid:true,picked:false},
+  {name:'Mina',qty:1,paid:true,picked:true}
+];
+function save(){localStorage.setItem(STORE,JSON.stringify(people));renderAll()}
+function totalPortions(){return people.reduce((s,p)=>s+(Number(p.qty)||1),0)}
+function changeQty(d){qty=Math.max(1,Math.min(20,qty+d));document.getElementById('qty').textContent=qty;document.getElementById('orderBtn').textContent=`登記 ${qty} 份・NT$${qty*PRICE}`}
+function placeOrder(){const input=document.getElementById('nameInput');const name=input.value.trim();if(!name){input.focus();input.animate([{transform:'translateX(-5px)'},{transform:'translateX(5px)'},{transform:'translateX(0)'}],{duration:220});toast('請先填寫芳名');return}let p=people.find(x=>x.name===name);if(p){p.qty=(Number(p.qty)||1)+qty}else{people.unshift({name,qty,paid:false,picked:false})}save();document.getElementById('orderBtn').classList.add('done');document.getElementById('orderBtn').textContent=`✓ ${name} 已登記 ${qty} 份`;document.getElementById('orderNote').textContent=`共 NT$${qty*PRICE}。付款與取餐狀態可在下方獨立更新。`;input.value='';setTimeout(()=>{document.getElementById('orderBtn').classList.remove('done');changeQty(0)},1800)}
+function renderAll(){const total=totalPortions();document.getElementById('count').textContent=total;document.getElementById('progress').style.width=Math.min(100,total/MIN_PORTIONS*100)+'%';document.getElementById('groupText').textContent=total>=MIN_PORTIONS?'已成團，明天會開火':`還差 ${MIN_PORTIONS-total} 份成團`;document.getElementById('portionCount').textContent=total;document.getElementById('paidCount').textContent=people.filter(p=>p.paid).reduce((s,p)=>s+(Number(p.qty)||1),0);document.getElementById('pickedCount').textContent=people.filter(p=>p.picked).reduce((s,p)=>s+(Number(p.qty)||1),0);renderPeople()}
+function renderPeople(){const list=document.getElementById('peopleList');list.innerHTML='';people.forEach((p,i)=>{const el=document.createElement('div');el.className='person';el.innerHTML=`<div class="person-top"><div class="person-name">${esc(p.name)}</div><div class="portion">${p.qty||1} 份・NT$${(p.qty||1)*PRICE}</div></div><div class="state-grid"><button class="state ${p.paid?'paid':'unpaid'}" onclick="togglePaid(${i})">${p.paid?'✓ 已付款':'未付款'}</button><button class="state ${p.picked?'picked':'notpicked'}" onclick="togglePicked(${i})">${p.picked?'✓ 已取餐':'未取餐'}</button></div>`;list.appendChild(el)})}
+function togglePaid(i){people[i].paid=!people[i].paid;if(people[i].paid)successSound();else ohNoSound();save()}
+function togglePicked(i){people[i].picked=!people[i].picked;save()}
+function successSound(){try{const A=window.AudioContext||window.webkitAudioContext;const ctx=new A();const now=ctx.currentTime;[659,784,988,1319].forEach((f,k)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.type='square';o.frequency.value=f;g.gain.setValueAtTime(.0001,now+k*.08);g.gain.exponentialRampToValueAtTime(.16,now+k*.08+.01);g.gain.exponentialRampToValueAtTime(.0001,now+k*.08+.11);o.connect(g).connect(ctx.destination);o.start(now+k*.08);o.stop(now+k*.08+.13)});setTimeout(()=>ctx.close(),700)}catch(e){}}
+function ohNoSound(){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance('Oh no!');u.lang='en-US';u.rate=.9;u.pitch=.75;u.volume=1;speechSynthesis.speak(u)}catch(e){}}
+function openManage(){document.getElementById('manageModal').classList.add('show')}function closeManage(){document.getElementById('manageModal').classList.remove('show')}
+function adminAdd(){const n=document.getElementById('adminName'),q=document.getElementById('adminQty');const name=n.value.trim(),num=Math.max(1,Number(q.value)||1);if(!name){n.focus();return}people.unshift({name,qty:num,paid:false,picked:false});n.value='';q.value=1;save();toast('已新增 '+name)}
+function truth(v,type){const s=String(v??'').trim().toLowerCase();if(type==='paid')return ['是','yes','y','1','true','已付款','paid'].includes(s);return ['是','yes','y','1','true','已取餐','picked'].includes(s)}
+async function importSheet(e){const file=e.target.files[0];if(!file)return;try{const buf=await file.arrayBuffer();const wb=XLSX.read(buf,{type:'array'});const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});let added=0;rows.forEach(r=>{const name=String(r['姓名']||r['名字']||r['name']||'').trim();if(!name)return;const num=Math.max(1,Number(r['份數']||r['數量']||r['qty']||1)||1);const paid=truth(r['付款']||r['付款狀態']||r['paid'],'paid');const picked=truth(r['取餐']||r['取餐狀態']||r['picked'],'picked');const old=people.find(p=>p.name===name);if(old){old.qty=num;old.paid=paid;old.picked=picked}else people.push({name,qty:num,paid,picked});added++});save();toast(`已匯入／更新 ${added} 筆`);e.target.value=''}catch(err){toast('匯入失敗，請確認欄位格式')}}
+function toast(t){const el=document.getElementById('toast');el.textContent=t;el.classList.add('show');clearTimeout(window.__tt);window.__tt=setTimeout(()=>el.classList.remove('show'),1800)}function esc(s){return String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+renderAll();changeQty(0);
 </script>
-</body>
-</html>
+</body></html>
