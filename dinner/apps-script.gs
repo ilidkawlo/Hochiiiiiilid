@@ -1,182 +1,29 @@
-const SYSTEM_SHEET = '晚餐系統';
+// 部署前請在「專案設定 → 指令碼屬性」新增 ADMIN_PIN，供管理者更正使用。
+// 試算表與 Apps Script 專案時區需設為 Asia/Taipei，21:00 截止判斷才會一致。
+const SYSTEM_SHEET='晚餐系統',REQUEST_SHEET='晚餐系統請求',DEFAULT_PRICE=110,CUTOFF_HOUR=21;
 
-function doGet(e) {
-  try {
-    const action = String((e.parameter && e.parameter.action) || '').trim();
-    const date = String((e.parameter && e.parameter.date) || '').trim();
-    if (action === 'list') return json_(buildDay_(date));
-    if (action === 'names') return json_({ok:true, date:date, names:getRosterNames_(date)});
-    return json_({ok:false, error:'unsupported_action'});
-  } catch (err) {
-    return json_({ok:false, error:String(err)});
-  }
-}
+function doGet(e){try{const a=String(e.parameter&&e.parameter.action||''),d=String(e.parameter&&e.parameter.date||'');if(a==='list')return json_(buildDay_(d));if(a==='names')return json_({ok:true,date:d,names:getRosterNames_(d)});return json_({ok:false,error:'unsupported_action'});}catch(err){return json_({ok:false,error:String(err&&err.message||err)});}}
+function doPost(e){try{const d=JSON.parse(e.postData&&e.postData.contents||'{}'),lock=LockService.getScriptLock();if(!lock.tryLock(15000))return json_({ok:false,error:'busy_try_again'});try{const saved=getRequestResult_(d.requestId);if(saved)return json_(saved);let r;if(d.action==='order')r=upsertOrder_(d);else if(d.action==='status')r=updateStatus_(d);else if(d.action==='deleteOrder')r=deleteOrder_(d);else if(d.action==='adminCorrect')r=adminCorrect_(d);else r={ok:false,error:'unsupported_action'};if(d.requestId&&r.ok)saveRequestResult_(d.requestId,d.action,r);return json_(r);}finally{lock.releaseLock();}}catch(err){return json_({ok:false,error:String(err&&err.message||err)});}}
 
-function doPost(e) {
-  try {
-    const data = JSON.parse((e.postData && e.postData.contents) || '{}');
-    if (data.action === 'order') return json_(upsertOrder_(data));
-    if (data.action === 'status') return json_(updateStatus_(data));
-    if (data.action === 'deleteOrder') return json_(deleteOrder_(data));
-    return json_({ok:false, error:'unsupported_action'});
-  } catch (err) {
-    return json_({ok:false, error:String(err)});
-  }
-}
+function getSystemSheet_(){const ss=SpreadsheetApp.getActiveSpreadsheet();let sh=ss.getSheetByName(SYSTEM_SHEET);if(!sh){sh=ss.insertSheet(SYSTEM_SHEET);sh.getRange(1,1,1,8).setValues([['日期','姓名','份數','單價','應收','已付款','已取餐','更新時間']]);sh.setFrozenRows(1);}return sh;}
+function getRequestSheet_(){const ss=SpreadsheetApp.getActiveSpreadsheet();let sh=ss.getSheetByName(REQUEST_SHEET);if(!sh){sh=ss.insertSheet(REQUEST_SHEET);sh.getRange(1,1,1,4).setValues([['請求編號','動作','時間','結果']]);sh.setFrozenRows(1);sh.hideSheet();}return sh;}
+function getRequestResult_(id){id=String(id||'').trim();if(!id)return null;const sh=getRequestSheet_(),last=sh.getLastRow();if(last<2)return null;const hit=sh.getRange(2,1,last-1,1).createTextFinder(id).matchEntireCell(true).findNext();if(!hit)return null;try{return JSON.parse(String(sh.getRange(hit.getRow(),4).getValue()||''));}catch(err){return {ok:false,error:'invalid_saved_request'};}}
+function saveRequestResult_(id,action,result){getRequestSheet_().appendRow([String(id),String(action||''),new Date(),JSON.stringify(result)]);}
 
-function getSystemSheet_() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let sh = ss.getSheetByName(SYSTEM_SHEET);
-  if (!sh) {
-    sh = ss.insertSheet(SYSTEM_SHEET);
-    sh.getRange(1,1,1,8).setValues([['日期','姓名','份數','單價','應收','已付款','已取餐','更新時間']]);
-    sh.setFrozenRows(1);
-  }
-  return sh;
-}
+function buildDay_(date){if(!parseDate_(date))return {ok:false,error:'invalid_date'};const monthly=getMonthlyDinnerOrders_(date),system=getSystemRows_(date),map={};monthly.forEach(p=>map[p.name]={date:date,name:p.name,qty:p.qty,webQty:0,paid:false,picked:false,source:'月表'});system.forEach(p=>{if(map[p.name]){map[p.name].qty+=Math.max(0,p.qty);map[p.name].webQty=Math.max(0,p.qty);map[p.name].paid=p.paid;map[p.name].picked=p.picked;if(p.qty>0)map[p.name].source='月表＋網頁';}else if(p.qty>0)map[p.name]={date:date,name:p.name,qty:p.qty,webQty:p.qty,paid:p.paid,picked:p.picked,source:'網頁'};});return {ok:true,date:date,people:Object.keys(map).map(k=>map[k]).filter(p=>p.name&&p.qty>0),names:getRosterNames_(date),serverTime:new Date().toISOString()};}
+function getMonthlyDinnerOrders_(date){const info=parseDate_(date);if(!info)return [];const sh=SpreadsheetApp.getActiveSpreadsheet().getSheetByName(info.sheetName);if(!sh)return [];const v=sh.getDataRange().getDisplayValues();if(v.length<3)return [];const row1=v[0]||[],row2=v[1]||[],prefix=info.month+'/'+info.day;let dc=-1;for(let c=0;c<row1.length;c++){const s=String(row1[c]||'').trim();if(s===prefix||s.indexOf(prefix+'(')===0||s.indexOf(prefix+'（')===0){dc=c;break;}}if(dc<0)return [];let dinner=-1;for(let c=dc;c<=Math.min(dc+2,row2.length-1);c++)if(String(row2[c]||'').trim()==='晚餐'){dinner=c;break;}if(dinner<0)return [];const out=[];for(let r=2;r<v.length;r++){const name=String(v[r]&&v[r][1]||'').trim(),qty=Number(String(v[r]&&v[r][dinner]||'').trim());if(name&&isFinite(qty)&&qty>0)out.push({name:name,qty:qty});}return out;}
+function getRosterNames_(date){const info=parseDate_(date);if(!info)return [];const sh=SpreadsheetApp.getActiveSpreadsheet().getSheetByName(info.sheetName);if(!sh||sh.getLastRow()<3)return [];return Array.from(new Set(sh.getRange(3,2,sh.getLastRow()-2,1).getDisplayValues().map(r=>String(r[0]||'').trim()).filter(Boolean)));}
+function getSystemRows_(date){const v=getSystemSheet_().getDataRange().getValues(),out=[];for(let i=1;i<v.length;i++){if(normDate_(v[i][0])!==date)continue;const name=String(v[i][1]||'').trim();if(name)out.push({row:i+1,name:name,qty:Number(v[i][2])||0,price:Number(v[i][3])||DEFAULT_PRICE,paid:bool_(v[i][5]),picked:bool_(v[i][6])});}return out;}
 
-function buildDay_(date) {
-  if (!date) return {ok:false, error:'missing_date'};
-  const monthly = getMonthlyDinnerOrders_(date);
-  const system = getSystemRows_(date);
-  const map = {};
+function upsertOrder_(d){const sh=getSystemSheet_(),date=String(d.date||'').trim(),name=cleanName_(d.name),qty=Number(d.qty);if(!parseDate_(date)||!name)return {ok:false,error:'missing_or_invalid_order'};if(!isFinite(qty)||qty<1||qty>20||Math.floor(qty)!==qty)return {ok:false,error:'invalid_qty'};if(date===tomorrowISO_()&&isTomorrowClosed_())return {ok:false,error:'ordering_closed'};const old=getSystemRows_(date).find(r=>r.name===name);if(old){const next=Math.max(0,old.qty)+qty;sh.getRange(old.row,3,1,6).setValues([[next,DEFAULT_PRICE,next*DEFAULT_PRICE,old.paid,old.picked,new Date()]]);return {ok:true,updated:true,date:date,name:name,qty:next};}sh.appendRow([date,name,qty,DEFAULT_PRICE,qty*DEFAULT_PRICE,false,false,new Date()]);return {ok:true,created:true,date:date,name:name,qty:qty};}
+function updateStatus_(d){const sh=getSystemSheet_(),date=String(d.date||'').trim(),name=cleanName_(d.name),field=String(d.field||'');if(!parseDate_(date)||!name||!['paid','picked'].includes(field))return {ok:false,error:'invalid_status_request'};if(d.value!==true)return {ok:false,error:'status_cannot_be_reversed'};const old=getSystemRows_(date).find(r=>r.name===name);if(old){const paid=old.paid||field==='paid',picked=old.picked||field==='picked';sh.getRange(old.row,6,1,3).setValues([[paid,picked,new Date()]]);return {ok:true,updated:true,date:date,name:name,paid:paid,picked:picked};}const paid=field==='paid',picked=field==='picked';sh.appendRow([date,name,0,DEFAULT_PRICE,0,paid,picked,new Date()]);return {ok:true,createdStatus:true,date:date,name:name,paid:paid,picked:picked};}
+function deleteOrder_(d){const sh=getSystemSheet_(),date=String(d.date||'').trim(),name=cleanName_(d.name);if(!parseDate_(date)||!name)return {ok:false,error:'missing_date_or_name'};const old=getSystemRows_(date).find(r=>r.name===name);if(!old||old.qty<=0)return {ok:false,error:'no_temporary_order'};if(old.paid)return {ok:false,error:'paid_order_cannot_be_deleted'};const monthly=getMonthlyDinnerOrders_(date).filter(p=>p.name===name).reduce((s,p)=>s+p.qty,0);if(monthly>0&&old.picked){sh.getRange(old.row,3,1,6).setValues([[0,DEFAULT_PRICE,0,false,true,new Date()]]);return {ok:true,deletedOrder:true,keptStatus:true,date:date,name:name};}sh.deleteRow(old.row);return {ok:true,deleted:true,date:date,name:name};}
+function adminCorrect_(d){const expected=String(PropertiesService.getScriptProperties().getProperty('ADMIN_PIN')||'');if(!expected)return {ok:false,error:'admin_pin_not_configured'};if(String(d.pin||'')!==expected)return {ok:false,error:'invalid_admin_pin'};const sh=getSystemSheet_(),date=String(d.date||'').trim(),name=cleanName_(d.name);if(!parseDate_(date)||!name||typeof d.paid!=='boolean'||typeof d.picked!=='boolean')return {ok:false,error:'invalid_correction'};const old=getSystemRows_(date).find(r=>r.name===name);if(old)sh.getRange(old.row,6,1,3).setValues([[d.paid,d.picked,new Date()]]);else sh.appendRow([date,name,0,DEFAULT_PRICE,0,d.paid,d.picked,new Date()]);return {ok:true,corrected:true,date:date,name:name,paid:d.paid,picked:d.picked};}
 
-  monthly.forEach(p => {
-    map[p.name] = {date:date, name:p.name, qty:p.qty, webQty:0, paid:false, picked:false, source:'月表'};
-  });
-
-  system.forEach(p => {
-    if (map[p.name]) {
-      map[p.name].qty += Math.max(0, p.qty);
-      map[p.name].webQty = Math.max(0, p.qty);
-      map[p.name].paid = p.paid;
-      map[p.name].picked = p.picked;
-      if (p.qty > 0) map[p.name].source = '月表＋網頁';
-    } else if (p.qty > 0) {
-      map[p.name] = {date:date, name:p.name, qty:p.qty, webQty:p.qty, paid:p.paid, picked:p.picked, source:'網頁'};
-    }
-  });
-
-  return {
-    ok:true,
-    date:date,
-    people:Object.keys(map).map(k => map[k]).filter(p => p.name && p.qty > 0),
-    names:getRosterNames_(date)
-  };
-}
-
-function getMonthlyDinnerOrders_(date) {
-  const info = parseDate_(date);
-  if (!info) return [];
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sh = ss.getSheetByName(info.sheetName);
-  if (!sh) return [];
-  const values = sh.getDataRange().getDisplayValues();
-  if (values.length < 3) return [];
-  const row1 = values[0] || [];
-  const row2 = values[1] || [];
-  const datePrefix = info.month + '/' + info.day;
-  let dateCol = -1;
-  for (let c = 0; c < row1.length; c++) {
-    const s = String(row1[c] || '').trim();
-    if (s === datePrefix || s.indexOf(datePrefix + '(') === 0 || s.indexOf(datePrefix + '（') === 0) { dateCol = c; break; }
-  }
-  if (dateCol < 0) return [];
-  let dinnerCol = -1;
-  for (let c = dateCol; c <= Math.min(dateCol + 2, row2.length - 1); c++) {
-    if (String(row2[c] || '').trim() === '晚餐') { dinnerCol = c; break; }
-  }
-  if (dinnerCol < 0) return [];
-  const out = [];
-  for (let r = 2; r < values.length; r++) {
-    const name = String((values[r] && values[r][1]) || '').trim();
-    if (!name) continue;
-    const qty = Number(String((values[r] && values[r][dinnerCol]) || '').trim());
-    if (isFinite(qty) && qty > 0) out.push({name:name, qty:qty});
-  }
-  return out;
-}
-
-function getRosterNames_(date) {
-  const info = parseDate_(date);
-  if (!info) return [];
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sh = ss.getSheetByName(info.sheetName);
-  if (!sh || sh.getLastRow() < 3) return [];
-  return Array.from(new Set(sh.getRange(3,2,sh.getLastRow()-2,1).getDisplayValues().map(r => String(r[0] || '').trim()).filter(Boolean)));
-}
-
-function getSystemRows_(date) {
-  const sh = getSystemSheet_();
-  const values = sh.getDataRange().getValues();
-  const out = [];
-  for (let i = 1; i < values.length; i++) {
-    if (normDate_(values[i][0]) !== date) continue;
-    const name = String(values[i][1] || '').trim();
-    if (!name) continue;
-    out.push({row:i+1,name:name,qty:Number(values[i][2]) || 0,paid:bool_(values[i][5]),picked:bool_(values[i][6])});
-  }
-  return out;
-}
-
-function upsertOrder_(data) {
-  const sh = getSystemSheet_();
-  const date = String(data.date || '').trim();
-  const name = String(data.name || '').trim();
-  const qty = Math.max(1, Number(data.qty) || 1);
-  const price = Math.max(0, Number(data.price) || 110);
-  if (!date || !name) return {ok:false, error:'missing_date_or_name'};
-  const old = getSystemRows_(date).find(r => r.name === name);
-  if (old) {
-    const nextQty = Math.max(0, old.qty) + qty;
-    sh.getRange(old.row,3,1,6).setValues([[nextQty,price,nextQty*price,old.paid,old.picked,new Date()]]);
-    return {ok:true, updated:true, date:date, name:name, qty:nextQty};
-  }
-  sh.appendRow([date,name,qty,price,qty*price,false,false,new Date()]);
-  return {ok:true, created:true, date:date, name:name, qty:qty};
-}
-
-function updateStatus_(data) {
-  const sh = getSystemSheet_();
-  const date = String(data.date || '').trim();
-  const name = String(data.name || '').trim();
-  if (!date || !name) return {ok:false, error:'missing_date_or_name'};
-  const paid = Boolean(data.paid), picked = Boolean(data.picked);
-  const old = getSystemRows_(date).find(r => r.name === name);
-  if (old) {
-    sh.getRange(old.row,6,1,3).setValues([[paid,picked,new Date()]]);
-    return {ok:true, updated:true, date:date, name:name};
-  }
-  sh.appendRow([date,name,0,110,0,paid,picked,new Date()]);
-  return {ok:true, createdStatus:true, date:date, name:name};
-}
-
-function deleteOrder_(data) {
-  const sh = getSystemSheet_();
-  const date = String(data.date || '').trim();
-  const name = String(data.name || '').trim();
-  if (!date || !name) return {ok:false, error:'missing_date_or_name'};
-  const old = getSystemRows_(date).find(r => r.name === name);
-  if (!old || old.qty <= 0) return {ok:false, error:'no_temporary_order'};
-
-  const monthlyQty = getMonthlyDinnerOrders_(date).filter(p => p.name === name).reduce((s,p) => s + p.qty, 0);
-  if (monthlyQty > 0 && (old.paid || old.picked)) {
-    sh.getRange(old.row,3,1,6).setValues([[0,110,0,old.paid,old.picked,new Date()]]);
-    return {ok:true, deletedOrder:true, keptStatus:true, date:date, name:name};
-  }
-
-  sh.deleteRow(old.row);
-  return {ok:true, deleted:true, date:date, name:name};
-}
-
-function parseDate_(date) {
-  const m = String(date || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!m) return null;
-  return {year:Number(m[1]), month:Number(m[2]), day:Number(m[3]), sheetName:m[1] + m[2]};
-}
-function normDate_(v) {
-  if (v instanceof Date && !isNaN(v)) return Utilities.formatDate(v, Session.getScriptTimeZone() || 'Asia/Taipei', 'yyyy-MM-dd');
-  return String(v || '').trim();
-}
-function bool_(v) { return v === true || ['true','1','yes','y','是','已付款','已取餐'].includes(String(v).trim().toLowerCase()); }
-function json_(obj) { return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON); }
+function isTomorrowClosed_(){return Number(Utilities.formatDate(new Date(),Session.getScriptTimeZone()||'Asia/Taipei','H'))>=CUTOFF_HOUR;}
+function tomorrowISO_(){return Utilities.formatDate(new Date(Date.now()+86400000),Session.getScriptTimeZone()||'Asia/Taipei','yyyy-MM-dd');}
+function cleanName_(v){return String(v||'').trim().replace(/[\r\n\t]/g,' ').slice(0,40);}
+function parseDate_(d){const m=String(d||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?{year:Number(m[1]),month:Number(m[2]),day:Number(m[3]),sheetName:m[1]+m[2]}:null;}
+function normDate_(v){return v instanceof Date&&!isNaN(v)?Utilities.formatDate(v,Session.getScriptTimeZone()||'Asia/Taipei','yyyy-MM-dd'):String(v||'').trim();}
+function bool_(v){return v===true||['true','1','yes','y','是','已付款','已取餐'].includes(String(v).trim().toLowerCase());}
+function json_(o){return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);}
